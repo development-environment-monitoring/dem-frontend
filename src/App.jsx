@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Select, { components } from 'react-select';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:3026';
+const API_PREFIX = '/api';
 const AUTH_TOKEN_KEY = 'dem_auth_token';
 const ACTIVE_MENU_KEY = 'dem_active_menu';
 const DASHBOARD_REFRESH_INTERVAL_KEY = 'dem_dashboard_refresh_interval';
@@ -247,7 +248,7 @@ export default function App() {
       }
 
       try {
-        const response = await fetch(`${API_BASE_URL}/auth/me`, {
+        const response = await fetch(getApiUrl('/auth/me'), {
           method: 'GET',
           headers: {
             Authorization: `Bearer ${storedToken}`,
@@ -502,7 +503,7 @@ export default function App() {
     setIsLoading(true);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/login`, {
+      const response = await fetch(getApiUrl('/auth/login'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -563,7 +564,7 @@ export default function App() {
     setIsRegistering(true);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/register`, {
+      const response = await fetch(getApiUrl('/auth/register'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -629,11 +630,12 @@ export default function App() {
     sessionStorage.removeItem(RESULTS_VERIFICATIONS_FILTER_KEY);
   }
 
-  function getAuthHeaders() {
-    return {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${authToken}`,
-    };
+  function getAuthHeaders(authToken) {
+    return authToken
+      ? {
+          Authorization: `Bearer ${authToken}`,
+        }
+      : {};
   }
 
   function updateVerificationForm(field, value) {
@@ -686,11 +688,9 @@ export default function App() {
     setIsLoadingVerifications(true);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/verifications`, {
+      const response = await fetch(getApiUrl('/verifications'), {
         method: 'GET',
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-        },
+        headers: getAuthHeaders(authToken),
       });
 
       const data = await response.json().catch(() => null);
@@ -721,20 +721,19 @@ export default function App() {
 
     try {
       const [resultsResponse, activeVerificationsResponse, devicesResponse] = await Promise.all([
-        fetch(`${API_BASE_URL}/verification-results`, {
+        fetch(getApiUrl('/verification-results'), {
           method: 'GET',
           headers: {
             Authorization: `Bearer ${authToken}`,
           },
         }),
-        fetch(`${API_BASE_URL}/verifications/active`, {
+        fetch(getApiUrl('/verifications/active'), {
           method: 'GET',
+          headers: getAuthHeaders(authToken),
         }),
-        fetch(`${API_BASE_URL}/verification-results/devices`, {
+        fetch(getApiUrl('/verification-results/devices'), {
           method: 'GET',
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-          },
+          headers: getAuthHeaders(authToken),
         }),
       ]);
 
@@ -797,20 +796,19 @@ export default function App() {
 
     try {
       const [resultsResponse, activeVerificationsResponse, devicesResponse] = await Promise.all([
-        fetch(`${API_BASE_URL}/verification-results`, {
+        fetch(getApiUrl('/verification-results'), {
           method: 'GET',
           headers: {
             Authorization: `Bearer ${authToken}`,
           },
         }),
-        fetch(`${API_BASE_URL}/verifications/active`, {
+        fetch(getApiUrl('/verifications/active'), {
           method: 'GET',
+          headers: getAuthHeaders(authToken),
         }),
-        fetch(`${API_BASE_URL}/verification-results/devices`, {
+        fetch(getApiUrl('/verification-results/devices'), {
           method: 'GET',
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-          },
+          headers: getAuthHeaders(authToken),
         }),
       ]);
 
@@ -991,11 +989,9 @@ export default function App() {
     setDevicesError('');
 
     try {
-      const response = await fetch(`${API_BASE_URL}/verification-results/devices`, {
+      const response = await fetch(getApiUrl('/verification-results/devices'), {
         method: 'GET',
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-        },
+        headers: getAuthHeaders(authToken),
       });
 
       const payload = await response.json().catch(() => null);
@@ -1048,12 +1044,15 @@ export default function App() {
 
     try {
       const response = await fetch(
-        `${API_BASE_URL}/verification-results/devices/${encodeURIComponent(
+        getApiUrl(`/verification-results/devices/${encodeURIComponent(
           deviceToEditAlias.machineId,
-        )}/alias`,
+        )}/alias`),
         {
           method: 'PUT',
-          headers: getAuthHeaders(),
+          headers: {
+            ...getAuthHeaders(authToken),
+            'Content-Type': 'application/json',
+          },
           body: JSON.stringify({ alias: deviceAliasInput }),
         },
       );
@@ -1099,9 +1098,11 @@ export default function App() {
     setIsChangingPassword(true);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/change-password`, {
-        method: 'PUT',
-        headers: getAuthHeaders(),
+      const response = await fetch(getApiUrl('/auth/change-password'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
           currentPassword: currentPasswordInput,
           newPassword: newPasswordInput,
@@ -1143,11 +1144,9 @@ export default function App() {
     setUsersManagementError('');
 
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/users`, {
+      const response = await fetch(getApiUrl('/auth/users'), {
         method: 'GET',
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-        },
+        headers: getAuthHeaders(authToken),
       });
 
       const payload = await response.json().catch(() => null);
@@ -1180,9 +1179,12 @@ export default function App() {
     setUsersManagementError('');
 
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/users/${user.id}/role`, {
+      const response = await fetch(getApiUrl(`/auth/users/${user.id}/role`), {
         method: 'PUT',
-        headers: getAuthHeaders(),
+        headers: {
+          ...getAuthHeaders(authToken),
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({ role: nextRole }),
       });
 
@@ -1435,14 +1437,17 @@ export default function App() {
 
     const isEditing = editingVerificationId !== null;
     const endpoint = isEditing
-      ? `${API_BASE_URL}/verifications/${editingVerificationId}`
-      : `${API_BASE_URL}/verifications`;
+      ? getApiUrl(`/verifications/${editingVerificationId}`)
+      : getApiUrl('/verifications');
     const method = isEditing ? 'PUT' : 'POST';
 
     try {
       const response = await fetch(endpoint, {
         method,
-        headers: getAuthHeaders(),
+        headers: {
+          ...getAuthHeaders(authToken),
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify(payload),
       });
 
@@ -1478,12 +1483,15 @@ export default function App() {
     setIsDeletingVerification(true);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/verifications/${verificationToDelete.id}`, {
-        method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${authToken}`,
+      const response = await fetch(
+        getApiUrl(`/verifications/${verificationToDelete.id}`),
+        {
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
         },
-      });
+      );
 
       const data = await response.json().catch(() => null);
 
@@ -2584,4 +2592,17 @@ export default function App() {
       )}
     </main>
   );
+}
+
+function getApiUrl(path) {
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+  return `${API_BASE_URL}${API_PREFIX}${normalizedPath}`;
+}
+
+function getAuthHeaders(authToken) {
+  return authToken
+    ? {
+        Authorization: `Bearer ${authToken}`,
+      }
+    : {};
 }

@@ -37,6 +37,7 @@ Define a URL base da API consumida pelo frontend.
 
 - **Valor padrão no código:** `http://127.0.0.1:3026`
 - **Valor padrão no Docker build:** `http://localhost:3026`
+- O frontend adiciona automaticamente o prefixo `/api` nas requisições.
 
 Exemplo:
 
