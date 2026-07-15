@@ -58,7 +58,8 @@ const EMPTY_VERIFICATION_FORM = {
   description: '',
   active: true,
   command: '',
-  expectedOutput: '',
+  validationType: 'exact',
+  validationValue: '',
 };
 
 const EMPTY_DASHBOARD_METRICS = {
@@ -660,7 +661,10 @@ export default function App() {
       description: verification.description,
       active: verification.active,
       command: verification.command,
-      expectedOutput: verification.expectedOutput,
+      validationType:
+        verification.validationType ?? (verification.verificationRegex ? 'regex' : 'exact'),
+      validationValue:
+        verification.validationValue ?? verification.verificationRegex ?? verification.expectedOutput ?? '',
     });
     setIsVerificationFormOpen(true);
   }
@@ -1432,7 +1436,8 @@ export default function App() {
       description: verificationForm.description.trim(),
       active: verificationForm.active,
       command: verificationForm.command.trim(),
-      expectedOutput: verificationForm.expectedOutput.trim(),
+      validationType: verificationForm.validationType,
+      validationValue: verificationForm.validationValue.trim(),
     };
 
     const isEditing = editingVerificationId !== null;
@@ -2279,13 +2284,49 @@ export default function App() {
                         </label>
 
                         <label className="field">
-                          <span>Saída esperada</span>
+                          <span>Tipo de validação</span>
+                          <Select
+                            classNamePrefix="validation-select"
+                            options={[
+                              { value: 'exact', label: 'Saída exata' },
+                              { value: 'regex', label: 'Regex' },
+                            ]}
+                            value={
+                              verificationForm.validationType === 'regex'
+                                ? { value: 'regex', label: 'Regex' }
+                                : { value: 'exact', label: 'Saída exata' }
+                            }
+                            onChange={(option) => {
+                              const nextType = option?.value ?? 'exact';
+                              updateVerificationForm('validationType', nextType);
+                            }}
+                            isSearchable={false}
+                            isClearable={false}
+                            placeholder="Selecione o tipo"
+                            menuPortalTarget={document.body}
+                            styles={{
+                              menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                            }}
+                          />
+                        </label>
+
+                        <label className="field">
+                          <span>
+                            {verificationForm.validationType === 'regex'
+                              ? 'Regex de verificação'
+                              : 'Saída esperada'}
+                          </span>
                           <textarea
                             required
                             rows="3"
-                            value={verificationForm.expectedOutput}
+                            value={verificationForm.validationValue}
                             onChange={(event) =>
-                              updateVerificationForm('expectedOutput', event.target.value)
+                              updateVerificationForm('validationValue', event.target.value)
+                            }
+                            placeholder={
+                              verificationForm.validationType === 'regex'
+                                ? 'Ex: ^ok$'
+                                : 'Ex: ok'
                             }
                           />
                         </label>
