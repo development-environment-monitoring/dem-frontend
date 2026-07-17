@@ -421,12 +421,22 @@ body {
   padding: 1rem;
   display: grid;
   gap: 0.75rem;
+  align-content: start;
 }
 
 .dash-ranking-card h3 {
   margin: 0;
   font-size: 0.92rem;
   color: #334155;
+}
+
+.dash-ranking-card > .dash-table-wrap {
+  flex: 1;
+  min-height: 0;
+}
+
+.dash-ranking-card > .dash-empty-state {
+  align-self: start;
 }
 
 .dash-table-wrap {
